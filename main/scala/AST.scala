@@ -204,7 +204,7 @@ abstract class AbstractSuspension(exp: AST) extends BoundVal
 /** The token representing Jam empty (list).  NOTE: not a JamVal. */
 case object EmptyConstant extends Constant {
   override def accept[T](v: ASTVisitor[T]) =  v.forEmptyConstant
-  override def toString = "empty"
+  override def toString = "null"
 }
 
 /** Jam variable Token and AST class */
@@ -607,7 +607,7 @@ class Lexer(rdr: Reader) extends StreamTokenizer(new BufferedReader(rdr)) {
     // <empty>  ::= empty
     // <bool>  ::= true | false
     
-    wordTable.put(Symbol("empty"), EmptyConstant)
+    wordTable.put(Symbol("null"), EmptyConstant)
     wordTable.put(Symbol("true"),  True)
     wordTable.put(Symbol("false"), False)
     
