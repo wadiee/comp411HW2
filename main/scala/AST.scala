@@ -164,9 +164,9 @@ case object ConsPPrim extends PrimFun(Symbol("cons?")) {
   override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forConsPPrim
   override def toString = "cons?" 
 }
-case object EmptyPPrim extends PrimFun(Symbol("empty?")) {
+case object EmptyPPrim extends PrimFun(Symbol("null?")) {
   override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forEmptyPPrim
-  override def toString = "empty?" 
+  override def toString = "null?"
 }
 //case object RefPPrim extends PrimFun(Symbol("ref?")) {
 //  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forRefPPrim
@@ -632,7 +632,7 @@ class Lexer(rdr: Reader) extends StreamTokenizer(new BufferedReader(rdr)) {
     wordTable.put(Symbol("function?"), FunctionPPrim)
 //    wordTable.put(Symbol("ref?"),    RefPPrim)
     wordTable.put(Symbol("list?"),     ListPPrim)
-    wordTable.put(Symbol("empty?"),    EmptyPPrim)
+    wordTable.put(Symbol("null?"),    EmptyPPrim)
     wordTable.put(Symbol("cons?"),     ConsPPrim)
     wordTable.put(Symbol("arity"),     ArityPrim)
     wordTable.put(Symbol("cons"),      ConsPrim)
