@@ -9,10 +9,6 @@ case class Environ[V](map: scala.collection.mutable.Map[Symbol, V]) extends Env[
     this
   }
 }
-//case class JamEmpty(override val list: List[JamVal]) extends JamList(list) {
-//  def this() = this(EmptyConstant)
-//}
-
 class EvalException(msg: String) extends RuntimeException(msg)
 class Interpreter(reader: java.io.Reader) {
   def this(fileName: String) = this(new java.io.FileReader(fileName))
@@ -36,11 +32,6 @@ class Interpreter(reader: java.io.Reader) {
     def UnIntOp(e: Env[BoundVal], arg: AST, op: Int => Int, exceptionContent: String) = helper(arg, e) match {
       case (IntConstant(value: Int)) => IntConstant(op(value))
       case _ => throw new EvalException(exceptionContent)
-    }
-
-    def JamListToList(jamList: JamList): List[JamVal] = jamList match {
-      case EmptyConstant => ??? //TODO
-      case _ => jamList.first :: JamListToList(jamList.rest)
     }
 
     def helper(ast: AST, e: Env[BoundVal]): JamVal = ast match {
@@ -168,19 +159,19 @@ class Interpreter(reader: java.io.Reader) {
 
         case ConsPrim =>
           if (args.length != 2) throw new EvalException("Should have two arguments")
-          new JamList(helper(args(0), e)::JamListToList(helper(args(1), e).asInstanceOf[JamList]))
+          new JamListNE(helper(args(0), e), helper(args(1), e).asInstanceOf[JamList])
 
         case FirstPrim =>
           if (args.length != 1) throw new EvalException("Should have one arguments")
           args(0) match {
-            case jl: JamList => jl.first
+            case jl: JamListNE => jl.first
             case _ => throw new EvalException("arg0 is not a jam list")
           }
 
         case RestPrim =>
           if (args.length != 1) throw new EvalException("Should have one arguments")
           args(0) match {
-            case jl: JamList => jl.rest
+            case jl: JamListNE => jl.rest
             case _ => throw new EvalException("arg0 is not a jam list")
           }
 

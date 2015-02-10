@@ -37,10 +37,14 @@ sealed trait JamVal extends BoundVal {
 //  def rest = JamList(list.tail)
 //  override def toString = list.toString
 //}
+trait JamList extends JamVal
 
-case class JamList(first: JamVal, rest: JamList) extends JamVal {
-
-  override def toString = first + ", " + rest
+case class JamListNE(first: JamVal, rest: JamList) extends JamList {
+  private def jamListToList(jamList: JamList): List[JamVal] = jamList match {
+    case EmptyConstant => Nil
+    case JamListNE(first, rest) => first :: jamListToList(rest)
+  }
+  override def toString = jamListToList(this).toString()
 }
 
 /** Jam term AST type */
@@ -53,7 +57,7 @@ sealed trait Constant extends Term with Token
 trait JamValVisitor[T] {
   def forIntConstant(ic: IntConstant): T
   def forBoolConstant(bc: BoolConstant): T
-  def forJamList(jl: JamList): T
+  def forJamList(jl: JamListNE): T
   def forJamFun(jf: JamFun): T
   // def forJamVoid(jv: JamVoid): T  // Supports the addition of recursive let to Jam
 }
@@ -179,7 +183,7 @@ abstract class AbstractSuspension(exp: AST) extends BoundVal
 /* Token classes that are NOT JamVals */
 
 /** The token representing Jam empty (list).  NOTE: not a JamVal. */
-case object EmptyConstant extends Constant {
+case object EmptyConstant extends Constant with JamList {
   override def toString = "null"
 }
 

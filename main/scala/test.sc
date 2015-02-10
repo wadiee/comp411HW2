@@ -14,7 +14,7 @@ import java.io.StringReader
 //}
 
 //val gaga = new Parser(new StringReader("cons(1,cons(2,null))")).parse().getClass
-var agaga = List(2, 3, 4)
+var agaga = List()
 agaga.toString
 
 
