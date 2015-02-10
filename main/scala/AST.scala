@@ -3,9 +3,7 @@ import java.io._
 import scala.collection.mutable.{Map => MutableMap}
 
 /** Jam general AST type */
-trait AST {
-  def accept[T](v: ASTVisitor[T]): T
-}
+trait AST
 
 /** Visitor trait for general AST type */
 trait ASTVisitor[T] {
@@ -31,25 +29,25 @@ sealed trait BoundVal {
 /** Jam value type */
 sealed trait JamVal extends BoundVal {
   def force:JamVal = this
-  def accept[T](v: JamValVisitor[T]): T
 }
 
-case class JamList(list: List[JamVal]) extends JamVal {
-  def first = list.head
-  def rest = JamList(list.tail)
-  override def accept[T](jvv: JamValVisitor[T]): T = jvv.forJamList(this);
-  override def toString = list.toString
+//case class JamList(list: List[JamVal]) extends JamVal {
+//case class JamList(Jam) extends JamVal {
+//  def first = list.head
+//  def rest = JamList(list.tail)
+//  override def toString = list.toString
+//}
+
+case class JamList(first: JamVal, rest: JamList) extends JamVal {
+
+  override def toString = first + ", " + rest
 }
 
 /** Jam term AST type */
-sealed trait Term extends AST {
-  def accept[T](v: ASTVisitor[T]): T
-}
+sealed trait Term extends AST {}
 
 /** Jam constant token type; some constant tokens are JamVals but some are not */
-sealed trait Constant extends Term with Token {
-  def accept[T](v: ASTVisitor[T]): T
-}
+sealed trait Constant extends Term with Token
 
 /** a visitor object for Jam values */
 trait JamValVisitor[T] {
@@ -68,8 +66,6 @@ trait Token {}
 /** Jam Boolean constant class.  Note: Constant is a subtype of Token. */
 sealed abstract class BoolConstant(value: Boolean) extends Constant with JamVal {
   def not = if (value) False else True
-  override def accept[T](av: ASTVisitor[T]) =  av.forBoolConstant(this)
-  override def accept[T](jvv: JamValVisitor[T]) = jvv.forBoolConstant(this)
   override def toString = value toString
 }
 
@@ -83,18 +79,13 @@ object BoolConstant {
 /** Jam integer constant class */
 case class IntConstant(value: Int) extends Constant with JamVal {
   def neg = new IntConstant( - value)
-  override def accept[T](av: ASTVisitor[T]) =  av.forIntConstant(this)
-  override def accept[T](jvv: JamValVisitor[T]) =  jvv.forIntConstant(this)
   override def toString = value toString
 }
 
 /** Other JamVal classes */
 
 /** a Jam function (closure or primitive function) */
-sealed trait JamFun extends JamVal {
-  override def accept[T](jvv: JamValVisitor[T]): T = jvv.forJamFun(this)
-  def accept[T](jfv: JamFunVisitor[T]): T
-}
+sealed trait JamFun extends JamVal
 
 /** The visitor interface for the JamFun type */
 trait JamFunVisitor[T] {
@@ -112,7 +103,6 @@ trait Env[V] {
 
 /** A Jam closure */
 case class JamClosure(body: MapLiteral, env: Env[BoundVal]) extends JamFun {
-  def accept[T](jfv: JamFunVisitor[T]): T = jfv.forJamClosure(this)
   /**
    * Use default implementations (inherited from java.lang.Object) for
    * equals and hashCode. Closures should not use the default structural
@@ -123,11 +113,7 @@ case class JamClosure(body: MapLiteral, env: Env[BoundVal]) extends JamFun {
 }
 
 /** A Jam Primitive Function; should be an abstract case class but Scala forbids this*/
-abstract class PrimFun(name: Symbol) extends JamFun with Token with Term {
-  override def accept[T](v: ASTVisitor[T]): T = v.forPrimFun(this)
-  override def accept[T](jfv: JamFunVisitor[T]): T = jfv.forPrimFun(this)
-  def accept[T](pfv: PrimFunVisitor[T]): T
-}
+abstract class PrimFun(name: Symbol) extends JamFun with Token with Term
 
 ///** A dummy Jam value used to implement recursive let */
 // case object JamVoid extends JamVal {
@@ -148,24 +134,19 @@ trait PrimFunVisitor[T] {
 }
 
 case object FunctionPPrim extends PrimFun(Symbol("function?")) {
-  override def accept[T](pfv: PrimFunVisitor[T]): T = pfv.forFunctionPPrim
   override def toString = "function?"
 }
 
 case object NumberPPrim extends PrimFun(Symbol("number?")) {
-  override def accept[T](pfv: PrimFunVisitor[T]): T = pfv.forNumberPPrim
   override def toString = "number?"
 }
 case object ListPPrim extends PrimFun(Symbol("list?")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forListPPrim
-  override def toString = "list?" 
+  override def toString = "list?"
 }
 case object ConsPPrim extends PrimFun(Symbol("cons?")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forConsPPrim
-  override def toString = "cons?" 
+  override def toString = "cons?"
 }
 case object EmptyPPrim extends PrimFun(Symbol("null?")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forEmptyPPrim
   override def toString = "null?"
 }
 //case object RefPPrim extends PrimFun(Symbol("ref?")) {
@@ -173,20 +154,16 @@ case object EmptyPPrim extends PrimFun(Symbol("null?")) {
 //  override def toString = "ref?" 
 //}
 case object ArityPrim extends PrimFun(Symbol("arity")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forArityPrim
-  override def toString = "arity" 
+  override def toString = "arity"
 }
 case object ConsPrim extends PrimFun(Symbol("cons")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forConsPrim
-  override def toString = "cons" 
+  override def toString = "cons"
 }
 case object FirstPrim extends PrimFun(Symbol("first")) {
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forFirstPrim
-  override def toString = "first" 
+  override def toString = "first"
 }
 case object RestPrim extends PrimFun(Symbol("rest")) { 
-  override def accept[T](pfv: PrimFunVisitor[T]) = pfv.forRestPrim
-  override def toString = "rest" 
+  override def toString = "rest"
 }
 
 /** The basic Jam binding framework. */
@@ -203,13 +180,11 @@ abstract class AbstractSuspension(exp: AST) extends BoundVal
 
 /** The token representing Jam empty (list).  NOTE: not a JamVal. */
 case object EmptyConstant extends Constant {
-  override def accept[T](v: ASTVisitor[T]) =  v.forEmptyConstant
   override def toString = "null"
 }
 
 /** Jam variable Token and AST class */
 case class Variable(sym: Symbol) extends Term with Token {
-  override def accept[T](v: ASTVisitor[T]) =  v.forVariable(this)
   override def toString = sym.name
 }
 
@@ -245,25 +220,21 @@ case object SemiColon extends Delimiter(Symbol(";"))
 
 /** Jam unary operator application class */
 case class UnOpApp(rator: UnOp, arg: AST) extends Term {
-  override def accept[T](v: ASTVisitor[T]) = v.forUnOpApp(this)
   override def toString = rator + " " + arg
 }
 
 /** Jam binary operator application class */
 case class BinOpApp(rator: BinOp, arg1: AST, arg2: AST) extends AST {
-  override def accept[T](v: ASTVisitor[T]) = v.forBinOpApp(this)
-  override def toString =  "(" + arg1 + " " + rator + " " + arg2 + ")" 
+  override def toString =  "(" + arg1 + " " + rator + " " + arg2 + ")"
 }
 
 /** Jam fun (closure) class */
 case class MapLiteral(vars: Array[Variable], body: AST) extends AST {
-  override def accept[T](v: ASTVisitor[T]) = v.forMapLiteral(this)
   override def toString = "map " + vars.mkString(",") + (if (vars.isEmpty) "" else " ") + "to " + body
 }  
 
 /** Jam function (PrimFun or MapLiteral) application class */
 case class App(rator: AST, args: Array[AST]) extends Term {
-  override def accept[T](v: ASTVisitor[T]) = v.forApp(this)
   override def toString =
     rator match {
     case _: Variable | _: PrimFun => 
@@ -275,14 +246,12 @@ case class App(rator: AST, args: Array[AST]) extends Term {
 
 /** Jam if expression class */
 case class If(test: AST, conseq: AST, alt: AST) extends AST {
-  override def accept[T](v: ASTVisitor[T]) = v.forIf(this)
-  override def toString = "if " + test + " then " + conseq + " else " + alt 
+  override def toString = "if " + test + " then " + conseq + " else " + alt
 }  
 
 /** Jam let expression class */
 case class Let(defs: Array[Def], body: AST) extends AST {
-  override def accept[T](v: ASTVisitor[T]) = v.forLet(this)
-  override def toString =  "let " + defs.mkString(" ") + " in " + body 
+  override def toString =  "let " + defs.mkString(" ") + " in " + body
 }  
 
 /** Jam definition class */
@@ -294,7 +263,6 @@ case class Def(lhs: Variable, rhs: AST) {
 
 abstract class UnOp(s: Symbol) {
   override def toString = s.name
-  def accept[T](v: UnOpVisitor[T]): T
 }
 
 trait UnOpVisitor[T] {
@@ -305,17 +273,11 @@ trait UnOpVisitor[T] {
   // def forOpRef(opL OpRef)    // Supports ref cell extension to Jam
 }
 
-case object UnOpPlus extends UnOp('+) {
-  override def accept[T](v: UnOpVisitor[T]) = v.forUnOpPlus
-}
+case object UnOpPlus extends UnOp('+)
 
-case object UnOpMinus extends UnOp('-) {
-  override def accept[T](v: UnOpVisitor[T]) = v.forUnOpMinus 
-}
+case object UnOpMinus extends UnOp('-)
 
-case object OpTilde extends UnOp('~) {
-  override def accept[T](v: UnOpVisitor[T]) = v.forOpTilde
-}
+case object OpTilde extends UnOp('~)
 
 /* The following commented out objects are used to support the addition of ref cells to Jam */
 //object OpBang extends UnOp("!") {
@@ -330,7 +292,6 @@ case object OpTilde extends UnOp('~) {
 /** Should be a case class but forbidden by misguided Scala rules */
 abstract class BinOp(s: Symbol) {
   override def toString = s.name
-  def accept[T](v: BinOpVisitor[T]): T
 }
 
 trait BinOpVisitor[T] {
@@ -349,53 +310,29 @@ trait BinOpVisitor[T] {
   // def forOpGets(op: OpGets)  // Supports the ref cell extension to Jam
 }
 
-case object BinOpPlus extends BinOp(Symbol("+")) {  
-  override def accept[T](v: BinOpVisitor[T]) = v.forBinOpPlus
-}
+case object BinOpPlus extends BinOp(Symbol("+"))
 
-case object BinOpMinus extends BinOp(Symbol("-")) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forBinOpMinus
-}
+case object BinOpMinus extends BinOp(Symbol("-"))
 
-case object OpTimes extends BinOp('*) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpTimes 
-}
+case object OpTimes extends BinOp('*)
 
-case object OpDivide extends BinOp('/) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpDivide
-}
+case object OpDivide extends BinOp('/)
 
-case object OpEquals extends BinOp('=) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpEquals 
-}
+case object OpEquals extends BinOp('=)
 
-case object OpNotEquals extends BinOp('!=) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpNotEquals 
-}
+case object OpNotEquals extends BinOp('!=)
 
-case object OpLessThan extends BinOp('<) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpLessThan
-}
+case object OpLessThan extends BinOp('<)
 
-case object OpGreaterThan extends BinOp('>) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpGreaterThan 
-}
+case object OpGreaterThan extends BinOp('>)
 
-case object OpLessThanEquals extends BinOp('<=) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpLessThanEquals 
-}
+case object OpLessThanEquals extends BinOp('<=)
 
-case object OpGreaterThanEquals extends BinOp('>=) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpGreaterThanEquals
-}
+case object OpGreaterThanEquals extends BinOp('>=)
 
-case object OpAnd extends BinOp('&) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpAnd 
-}
+case object OpAnd extends BinOp('&)
 
-case object OpOr extends BinOp('|) {
-  override def accept[T](v: BinOpVisitor[T]) = v.forOpOr 
-}
+case object OpOr extends BinOp('|)
 
 /* Supports the ref cell extension to Jam
 case object OpGets extends BinOp("<-") {

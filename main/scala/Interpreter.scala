@@ -9,9 +9,9 @@ case class Environ[V](map: scala.collection.mutable.Map[Symbol, V]) extends Env[
     this
   }
 }
-case class JamEmpty(override val list: List[JamVal]) extends JamList(list) {
-  def this() = this(Nil)
-}
+//case class JamEmpty(override val list: List[JamVal]) extends JamList(list) {
+//  def this() = this(EmptyConstant)
+//}
 
 class EvalException(msg: String) extends RuntimeException(msg)
 class Interpreter(reader: java.io.Reader) {
@@ -39,7 +39,7 @@ class Interpreter(reader: java.io.Reader) {
     }
 
     def JamListToList(jamList: JamList): List[JamVal] = jamList match {
-      case JamEmpty => Nil
+      case EmptyConstant => ??? //TODO
       case _ => jamList.first :: JamListToList(jamList.rest)
     }
 
@@ -93,7 +93,7 @@ class Interpreter(reader: java.io.Reader) {
 
 
       // Constant
-      case EmptyConstant => ???
+      case EmptyConstant => EmptyConstant
       case b: BoolConstant => b
       case i: IntConstant => i
 

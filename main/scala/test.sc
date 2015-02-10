@@ -13,7 +13,10 @@ import java.io.StringReader
 //  case _ => false
 //}
 
-val gaga = new Parser(new StringReader("cons(1,cons(2,null))")).parse().getClass
+//val gaga = new Parser(new StringReader("cons(1,cons(2,null))")).parse().getClass
+var agaga = List(2, 3, 4)
+agaga.toString
+
 
 
 
