@@ -15,8 +15,8 @@ class NameTuple(jamVal: => JamVal, ast: AST) extends Tuple{
   override def getAST = ast
 }
 
-class NeedTuple(f: (AST, Map[Symbol, NeedTuple]) => JamVal, env: Map[Symbol, NeedTuple], ast: AST) extends Tuple{
-  lazy val jamVal = f(ast, env)
+class NeedTuple(f: (AST, Map[Symbol, NeedTuple]) => JamVal, env: Map[Symbol, NeedTuple], vaar: AST, ast: AST) extends Tuple{
+  lazy val jamVal = f(vaar, env)
   override def getJamVal = jamVal
   override def getAST = ast
 }
@@ -145,7 +145,10 @@ class Interpreter(reader: java.io.Reader) {
         case ConsPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ConsPPrim")
           args(0) match {
-            case ConsPrim => True
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
             case EmptyConstant => False
             case _ => throw new EvalException("ConsPPrim arg0 not ConsPrim nor EmptyConstant")
           }
@@ -458,7 +461,7 @@ class Interpreter(reader: java.io.Reader) {
       }
       case Let(defs: Array[Def], body: AST) =>
         var newMap = e
-        defs.map(d => (d.lhs.sym, new NeedTuple(helper, e, untilNotVariable(d.rhs, e)))).foreach(pair => newMap += pair)
+        defs.map(d => (d.lhs.sym, new NeedTuple(helper, e, d.rhs, untilNotVariable(d.rhs, e)))).foreach(pair => newMap += pair)
         helper(body, newMap)
 
       // Constant
@@ -557,7 +560,7 @@ class Interpreter(reader: java.io.Reader) {
           // Bind
           if (vars.length != args.length) throw new EvalException("The length of vars and args are not the same")
           var newMap = en
-          vars.zip(args).map(pair => (pair._1.sym, new NeedTuple(helper, e, untilNotVariable(pair._2, e)))).foreach(pair => newMap += (pair))
+          vars.zip(args).map(pair => (pair._1.sym, new NeedTuple(helper, e, pair._2, untilNotVariable(pair._2, e)))).foreach(pair => newMap += (pair))
           helper(body, newMap)
         }
         case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
