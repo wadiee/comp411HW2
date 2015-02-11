@@ -1,11 +1,15 @@
 import java.io.StringReader
 //
-//var map: Map[Int, Int] = Map()
-//map += (1 -> 2)
-//map += (2 -> 2)
-//map += (3 -> 2)
-//map += (1 -> 100)
-//map
+var map: Map[Int, Int] = Map()
+map = map + (1 -> 2)
+
+//
+
+map + (1 -> 2)
+map + (2 -> 2)
+map += (3 -> 2)
+map += (1 -> 100)
+
 //
 //
 //5 match {
@@ -19,6 +23,7 @@ agaga.toString
 
 var a: Boolean = true
 a.toString
+
 
 
 

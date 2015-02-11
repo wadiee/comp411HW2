@@ -21,13 +21,14 @@ trait ASTVisitor[T] {
 }
 
 /** Jam bound value type; may be a suspension */
-sealed trait BoundVal {
-  def force: JamVal
-}
+//sealed trait BoundVal {
+//  def force: JamVal
+//}
   
   
 /** Jam value type */
-sealed trait JamVal extends BoundVal {
+//sealed trait JamVal extends BoundVal {
+sealed trait JamVal {
   def force:JamVal = this
 }
 
@@ -98,15 +99,15 @@ trait JamFunVisitor[T] {
 }
 
 /** An environment trait required to define JamClosure below. V is the type of bound values. */
-trait Env[V] {
+trait Env {
   /** returns the value bound to s in this */
-  def get(s: Symbol): V
+  def get(s: Symbol): Tuple
   /** returns a new environment containing the bindings in this augmented by (s -> v) */
-  def add(p: Pair[Symbol,V]): Env[V]
+  def add(p: Pair[Symbol,Tuple]): Env
 }
 
 /** A Jam closure */
-case class JamClosure(body: MapLiteral, env: Env[BoundVal]) extends JamFun {
+case class JamClosure(body: MapLiteral, env: Env) extends JamFun {
   /**
    * Use default implementations (inherited from java.lang.Object) for
    * equals and hashCode. Closures should not use the default structural
@@ -177,7 +178,7 @@ case object RestPrim extends PrimFun(Symbol("rest")) {
   * and call-by-need bindings in the environment.  Note that an environment is simply an immutable 
   * Map[Symbol, BoundVal] or some equivalent data structure.  For call-by-value, every BoundVal is a JamVal.  For call-by-name and call-by-need
   * BoundVal also includes suspensions.*/
-abstract class AbstractSuspension(exp: AST) extends BoundVal
+//abstract class AbstractSuspension(exp: AST) extends BoundVal
   
 
 /* Token classes that are NOT JamVals */

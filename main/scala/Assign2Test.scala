@@ -56,9 +56,16 @@ class Assign2Test extends TestCase{
     assert(new Interpreter(new StringReader("let m:= 5; in m+1")).callByValue.toString.equals("6"))
   }
 
+  def testmid1 = {
+    assert(new Interpreter(new StringReader("let x:=2; in let y:=-x; in (map t to t * y)(100)")).callByValue.toString.equals("-200"))
+  }
+
   def testhard1() = {
     assert(new Interpreter(new StringReader("let Y    := map f to\n      let g := map x to f(map z to (x(x))(z));\n    in g(g);\n    FACT := map f to\n    map n to if n = 0 then 1 else n * f(n - 1);\n    in (Y(FACT))(3)")).callByValue.toString.equals("6"))
   }
 
+  def testhard2() = {
+    assert(new Interpreter(new StringReader("let Y    := map f to \n              let g := map x to f(map z1,z2 to (x(x))(z1,z2));\n\t    in g(g);\n    APPEND := map ap to \n\t        map x,y to \n                  if x = null then y else cons(first(x), ap(rest(x), y));\n    l      := cons(1,cons(2,cons(3,null)));\t\nin (Y(APPEND))(l,l)")).callByValue.toString.equals("(1 2 3 1 2 3)"))
+  }
 
 }
