@@ -174,7 +174,11 @@ class Interpreter(reader: java.io.Reader) {
             case jl: JamListNE => jl.rest
             case _ => throw new EvalException("arg0 is not a jam list")
           }
-
+        case app: App => helper(app, e) match {
+            case JamClosure(body: MapLiteral, _) => helper(new App(body, args), e)
+            case _ => ???
+        }
+        case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
       }
       case pf: PrimFun => pf
     }

@@ -44,7 +44,7 @@ case class JamListNE(first: JamVal, rest: JamList) extends JamList {
     case EmptyConstant => Nil
     case JamListNE(first, rest) => first :: jamListToList(rest)
   }
-  override def toString = jamListToList(this).toString()
+  override def toString = jamListToList(this).mkString("(", " ", ")")
 }
 
 /** Jam term AST type */

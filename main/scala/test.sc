@@ -17,7 +17,8 @@ import java.io.StringReader
 var agaga = List()
 agaga.toString
 
-
+var a: Boolean = true
+a.toString
 
 
 

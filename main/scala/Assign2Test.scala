@@ -1,10 +1,7 @@
 import java.io.StringReader
 
 import junit.framework.TestCase
-//import junit.framework._
 import junit.framework.Assert._
-//import junit.framework._
-//import java.io._;
 
 /**
  * Created by Wade on 2/6/2015.
@@ -12,87 +9,56 @@ import junit.framework.Assert._
 class Assign2Test extends TestCase{
 
   def testConsFalse() = {
-    new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,cons(3,null))")).callByValue match {
-      case False =>
-      case _ => fail("Should False")
-    }
+    assert(new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,cons(3,null))")).callByValue.toString.equals("false"), "Should not equal")
   }
 
   def testBinAdd() = {
-    new Interpreter(new StringReader("1+2")).callByValue match {
-      case IntConstant(3) =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("1+2")).callByValue.toString.equals("3"), "1+2 should equal to 3")
   }
 
   def testBinCmp() = {
-    new Interpreter(new StringReader("5 = 5")).callByValue match {
-      case True =>
-      case _ => fail("Should True")
-    }
+    assert(new Interpreter(new StringReader("5 = 5")).callByValue.toString.equals("true"), "Should equal")
   }
 
   def testBinCmpFalse() = {
-    new Interpreter(new StringReader("5 = 7")).callByValue match {
-      case False =>
-      case _ => fail("Should False")
-    }
+    assert(new Interpreter(new StringReader("5 = 7")).callByValue.toString.equals("false"), "Should not equal")
   }
 
   def testConsTrue() = {
-    new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,cons(2,null))")).callByValue match {
-      case True =>
-      case _ => fail("Should True")
-    }
+    assert(new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,cons(2,null))")).callByValue.toString.equals("true"), "cons should equal cons")
   }
-
 
   def testBinConsFalse() = {
-    new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,null)")).callByValue match {
-      case False =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("cons(1,cons(2,null))=cons(1,null)")).callByValue.toString.equals("false"))
   }
+
   def testBinPrimFunTrue() = {
-    new Interpreter(new StringReader("cons? = cons?")).callByValue match {
-      case True =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("cons? = cons?")).callByValue.toString.equals("true"))
   }
+
   def testBinPrimFunFalse() = {
-    new Interpreter(new StringReader("cons? = null?")).callByValue match {
-      case False =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("cons? = null?")).callByValue.toString.equals("false"))
   }
+
   def testBinPrimMapFalse() = {
-    new Interpreter(new StringReader("cons? = (map x to x)")).callByValue match {
-      case False =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("cons? = (map x to x)")).callByValue.toString.equals("false"))
   }
+
   def testBinObjFalse() = {
-    new Interpreter(new StringReader("(map x to x) = (map x to x)")).callByValue match {
-      case False =>
-      case _ => fail("Not the correct sum")
-    }
-  }
-  def testLet() = {
-    new Interpreter(new StringReader("let m:=(map x to x); in m = m")).callByValue match {
-      case True =>
-      case _ => fail("Not the correct sum")
-    }
+    assert(new Interpreter(new StringReader("(map x to x) = (map x to x)")).callByValue.toString.equals("false"))
   }
 
+  def testValLet() = {
+    assert(new Interpreter(new StringReader("let m:=(map x to x); in m = m")).callByValue.toString.equals("true"))
+  }
 
+  def testValLet1() ={
+    assert(new Interpreter(new StringReader("let m:= 5; in m+1")).callByValue.toString.equals("6"))
+  }
 
-
-
-
-
-
-
-
+  def testhard1() = {
+    assert(new Interpreter(new StringReader("let Y    := map f to\n      let g := map x to f(map z to (x(x))(z));\n    in g(g);\n    FACT := map f to\n    map n to if n = 0 then 1 else n * f(n - 1);\n    in (Y(FACT))(3)")).callByValue.toString.equals("6"))
+  }
 
 
 }
