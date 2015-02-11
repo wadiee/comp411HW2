@@ -105,9 +105,8 @@ trait Env {
   /** returns a new environment containing the bindings in this augmented by (s -> v) */
   def add(p: Pair[Symbol,Tuple]): Env
 }
-
 /** A Jam closure */
-case class JamClosure(body: MapLiteral, env: Env) extends JamFun {
+case class JamClosure(body: MapLiteral, env: Map[Symbol, Tuple]) extends JamFun {
   /**
    * Use default implementations (inherited from java.lang.Object) for
    * equals and hashCode. Closures should not use the default structural

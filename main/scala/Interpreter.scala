@@ -1,16 +1,16 @@
 /** file Interpreter.scala **/
 case class Tuple(val jamVal: JamVal, val ast: AST)
 
-case class Environ(var map: Map[Symbol, Tuple]) extends Env {
-  def this() = this(Map())
-  /** returns the value bound to s in this */
-  override def get(s: Symbol): Tuple = map(s)
-  /** returns a new environment containing the bindings in this augmented by (s -> v) */
-  override def add(p: (Symbol, Tuple)): Env = {
-    map = map + (p._1 -> p._2)
-    this
-  }
-}
+//case class Environ(var map: Map[Symbol, Tuple]) extends Env {
+//  def this() = this(Map())
+//  /** returns the value bound to s in this */
+//  override def get(s: Symbol): Tuple = map(s)
+//  /** returns a new environment containing the bindings in this augmented by (s -> v) */
+//  override def add(p: (Symbol, Tuple)): Env = {
+//    map = map + (p._1 -> p._2)
+//    this
+//  }
+//}
 class EvalException(msg: String) extends RuntimeException(msg)
 class Interpreter(reader: java.io.Reader) {
   def this(fileName: String) = this(new java.io.FileReader(fileName))
@@ -19,11 +19,11 @@ class Interpreter(reader: java.io.Reader) {
 
 
   def callByValue: JamVal = {
-    def binIntOp(e: Env, arg1: AST, arg2: AST, op: (Int, Int) => Int, exceptionContent: String) = (helper(arg1, e), helper(arg2, e)) match {
+    def binIntOp(e: Map[Symbol, Tuple], arg1: AST, arg2: AST, op: (Int, Int) => Int, exceptionContent: String) = (helper(arg1, e), helper(arg2, e)) match {
       case (IntConstant(value1: Int), IntConstant(value2: Int)) => IntConstant(op(value1, value2))
       case _ => throw new EvalException(exceptionContent)
     }
-    def binIntCmpOp(e: Env, arg1: AST, arg2: AST, op: (Int, Int) => Boolean, exceptionContent: String) = (helper(arg1, e), helper(arg2, e)) match {
+    def binIntCmpOp(e: Map[Symbol, Tuple], arg1: AST, arg2: AST, op: (Int, Int) => Boolean, exceptionContent: String) = (helper(arg1, e), helper(arg2, e)) match {
       case (IntConstant(value1: Int), IntConstant(value2: Int)) => op(value1, value2) match {
         case true => True
         case false => False
@@ -31,18 +31,18 @@ class Interpreter(reader: java.io.Reader) {
       case _ => throw new EvalException(exceptionContent)
     }
 
-    def UnIntOp(e: Env, arg: AST, op: Int => Int, exceptionContent: String) = helper(arg, e) match {
+    def UnIntOp(e: Map[Symbol, Tuple], arg: AST, op: Int => Int, exceptionContent: String) = helper(arg, e) match {
       case (IntConstant(value: Int)) => IntConstant(op(value))
       case _ => throw new EvalException(exceptionContent)
     }
-    def untilNotVariable(input: AST, env: Env): AST = {
+    def untilNotVariable(input: AST, e: Map[Symbol, Tuple]): AST = {
       input match {
-        case vv: Variable => untilNotVariable(env.get(vv.sym).ast, env)
+        case vv: Variable => untilNotVariable(e(vv.sym).ast, e)
         case _ => input
       }
     }
 
-    def helper(ast: AST, e: Env): JamVal = ast match {
+    def helper(ast: AST, e: Map[Symbol, Tuple]): JamVal = ast match {
       case BinOpApp(binOpPlus: BinOp, arg1: AST, arg2: AST) => binOpPlus match {
         case BinOpPlus => binIntOp(e, arg1, arg2, _ + _, "BinOpPlus not with int")
         case BinOpMinus => binIntOp(e, arg1, arg2, _ - _, "BinOpMinus not with int")
@@ -87,8 +87,9 @@ class Interpreter(reader: java.io.Reader) {
         case False => helper(alt, e)
       }
       case Let(defs: Array[Def], body: AST) =>
-        defs.map(d => (d.lhs.sym, new Tuple(helper(d.rhs, e), untilNotVariable(d.rhs, e)))).foreach(pair => e.add(pair))
-        helper(body, e)
+        var newMap = e
+        defs.map(d => (d.lhs.sym, new Tuple(helper(d.rhs, e), untilNotVariable(d.rhs, e)))).foreach(pair => newMap += pair)
+        helper(body, newMap)
 
 
       // Constant
@@ -98,7 +99,9 @@ class Interpreter(reader: java.io.Reader) {
 
 
 
-      case Variable(sym: Symbol) => e.get(sym).jamVal
+      case Variable(sym: Symbol) => {
+        e(sym).jamVal
+      }
 
       case UnOpApp(rator: UnOp, arg: AST) => rator match {
         case UnOpPlus =>  UnIntOp(e, arg, + _, "unary plus without int")
@@ -115,8 +118,9 @@ class Interpreter(reader: java.io.Reader) {
           if (mapSth.length != args.length)
             throw new EvalException("The number of map key to map value does not match")
           /* add new binding to the closure, then pass on */
-          mapSth.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, e), untilNotVariable(pair._2, e)))).foreach(pair => e.add(pair))
-          helper(toSth, e)
+          var newMap = e
+          mapSth.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, e), untilNotVariable(pair._2, e)))).foreach(pair => newMap += pair)
+          helper(toSth, newMap)
 
         // PrimFun
         case FunctionPPrim =>
@@ -185,19 +189,20 @@ class Interpreter(reader: java.io.Reader) {
             case JamClosure(MapLiteral(vars, body), en) => {
               // Bind
               if (vars.length != args.length) throw new EvalException("The length of vars and args are not the same")
+              var newMap = en
               vars.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, en), untilNotVariable(pair._2, en)))).
-                foreach(pair => en.add(pair))
+                foreach(pair => newMap += (pair))
               //helper(new App(body, args), e)
-              helper(body, en)
+              helper(body, newMap)
             }
             case _ => throw new EvalException("Got App's App ractor which is not of type ureure, it is a " + helper(app, e).getClass + " and args0 is " + args(0))
         }
-        case v: Variable => helper(new App(untilNotVariable(v, e), args),e)
+        case v: Variable => helper(new App(untilNotVariable(v, e), args), e)
         case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
       }
       case pf: PrimFun => pf
     }
-    helper(ast, new Environ())
+    helper(ast, Map())
 
   }
 
