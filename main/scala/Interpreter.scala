@@ -91,13 +91,10 @@ class Interpreter(reader: java.io.Reader) {
         defs.map(d => (d.lhs.sym, new Tuple(helper(d.rhs, e), untilNotVariable(d.rhs, e)))).foreach(pair => newMap += pair)
         helper(body, newMap)
 
-
       // Constant
       case EmptyConstant => EmptyConstant
       case b: BoolConstant => b
       case i: IntConstant => i
-
-
 
       case Variable(sym: Symbol) => {
         e(sym).jamVal
@@ -113,14 +110,14 @@ class Interpreter(reader: java.io.Reader) {
       }
       case map: MapLiteral => JamClosure(map, e)
 
-      case App(rator: AST, args: Array[AST]) => rator match {
-        case MapLiteral(mapSth: Array[Variable], toSth: AST) =>
-          if (mapSth.length != args.length)
-            throw new EvalException("The number of map key to map value does not match")
-          /* add new binding to the closure, then pass on */
-          var newMap = e
-          mapSth.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, e), untilNotVariable(pair._2, e)))).foreach(pair => newMap += pair)
-          helper(toSth, newMap)
+      case App(rator: AST, args: Array[AST]) => helper(rator, e) match {
+//        case MapLiteral(mapSth: Array[Variable], toSth: AST) =>
+//          if (mapSth.length != args.length)
+//            throw new EvalException("The number of map key to map value does not match")
+//          /* add new binding to the closure, then pass on */
+//          var newMap = e
+//          mapSth.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, e), untilNotVariable(pair._2, e)))).foreach(pair => newMap += pair)
+//          helper(toSth, newMap)
 
         // PrimFun
         case FunctionPPrim =>
@@ -174,30 +171,40 @@ class Interpreter(reader: java.io.Reader) {
 
         case FirstPrim =>
           if (args.length != 1) throw new EvalException("Should have one arguments")
-          helper(untilNotVariable(args(0), e), e) match {
+          args(0) match {
+            case va: Variable => e(va.sym).jamVal match {
+              case jl: JamListNE => jl.first
+              case _ => throw new EvalException("Calling FirstPrim on a non-list variable")
+            }
             case jl: JamListNE => jl.first
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
         case RestPrim =>
           if (args.length != 1) throw new EvalException("Should have one arguments")
-          helper(untilNotVariable(args(0), e), e) match {
+          //var temp = untilNotVariable(args(0), e)
+
+          args(0) match {
+            case va: Variable => e(va.sym).jamVal match {
+              case jl: JamListNE => jl.rest
+              case _ => throw new EvalException("Calling RestPrim on a non-list variable")
+            }
             case jl: JamListNE => jl.rest
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
-        case app: App => helper(app, e) match {
-            case JamClosure(MapLiteral(vars, body), en) => {
-              // Bind
-              if (vars.length != args.length) throw new EvalException("The length of vars and args are not the same")
-              var newMap = en
-              vars.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, en), untilNotVariable(pair._2, en)))).
-                foreach(pair => newMap += (pair))
-              //helper(new App(body, args), e)
-              helper(body, newMap)
-            }
-            case _ => throw new EvalException("Got App's App ractor which is not of type ureure, it is a " + helper(app, e).getClass + " and args0 is " + args(0))
+
+        case JamClosure(MapLiteral(vars, body), en) => {
+          // Bind
+          if (vars.length != args.length) throw new EvalException("The length of vars and args are not the same")
+          var newMap = en
+          vars.zip(args).map(pair => (pair._1.sym, new Tuple(helper(pair._2, e), untilNotVariable(pair._2, e)))).
+            foreach(pair => newMap += (pair))
+          //helper(new App(body, args), e)
+          helper(body, newMap)
         }
-        case v: Variable => helper(new App(untilNotVariable(v, e), args), e)
+        //case _ => throw new EvalException("Got App's App ractor which is not of type ureure, it is a " + helper(app, e).getClass + " and args0 is " + args(0))
+
+        //case v: Variable => helper(new App(untilNotVariable(v, e), args), e)
         case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
       }
       case pf: PrimFun => pf
