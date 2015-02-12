@@ -85,16 +85,19 @@ class Interpreter(reader: java.io.Reader) {
         case OpAnd => helper(arg1, e) match {
           case False => False
           case True => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
         case OpOr => helper(arg1, e) match {
           case True => True
           case False => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       // The followings are below Term
       case If(test: AST, conseq: AST, alt: AST) => helper(test, e) match {
         case True => helper(conseq, e)
         case False => helper(alt, e)
+        case _ => throw new EvalException("Never should be here!")
       }
       case Let(defs: Array[Def], body: AST) =>
         var newMap = e
@@ -116,6 +119,7 @@ class Interpreter(reader: java.io.Reader) {
         case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       case map: MapLiteral => JamClosure(map, e)
@@ -277,16 +281,19 @@ class Interpreter(reader: java.io.Reader) {
         case OpAnd => helper(arg1, e) match {
           case False => False
           case True => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
         case OpOr => helper(arg1, e) match {
           case True => True
           case False => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       // The followings are below Term
       case If(test: AST, conseq: AST, alt: AST) => helper(test, e) match {
         case True => helper(conseq, e)
         case False => helper(alt, e)
+        case _ => throw new EvalException("Never should be here!")
       }
       case Let(defs: Array[Def], body: AST) =>
         var newMap = e
@@ -308,6 +315,7 @@ class Interpreter(reader: java.io.Reader) {
         case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       case map: MapLiteral => NameJamClosure(map, e)
@@ -472,16 +480,19 @@ class Interpreter(reader: java.io.Reader) {
         case OpAnd => helper(arg1, e) match {
           case False => False
           case True => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
         case OpOr => helper(arg1, e) match {
           case True => True
           case False => helper(arg2, e)
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       // The followings are below Term
       case If(test: AST, conseq: AST, alt: AST) => helper(test, e) match {
         case True => helper(conseq, e)
         case False => helper(alt, e)
+        case _ => throw new EvalException("Never should be here!")
       }
       case Let(defs: Array[Def], body: AST) =>
         var newMap = e
@@ -503,6 +514,7 @@ class Interpreter(reader: java.io.Reader) {
         case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
+          case _ => throw new EvalException("Never should be here!")
         }
       }
       case map: MapLiteral => NeedJamClosure(map, e)

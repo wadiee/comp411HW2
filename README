@@ -1,0 +1,27 @@
+zz23
+wz19
+
+Note Used 1 Slip Day
+
+# Program Organization
+
+We choose to write the program with a big helper method inside CallByValue, CallByName, and CallByNeed. The helper is recursive, and it takes in an AST, and a immutable scala map, which is for variable binding. Inside the helper, we would pattern match on the input AST, and try to manipulate with the AST, using the input map binding.
+
+We used immutable map, because we wanted a different variable binding whenever we are changing the map, because this would imply we are going into a different environment. And we do not want to lose the outter environment, so we chose to have the immutable map to store it.
+
+For Call-by-Name, we learned and adpted from scala call-by-name to build a call-by-name data structure -- NameTuple
+
+For Call-by-Need, we learned and adpated from scala lazy evaluation and pass by function to build a call-by-need data stucture -- NeedTuple.
+
+
+# Testing Processes
+
+We have test a large set of test cases with our own unit tests. We started designing our test cases by first using the provided simple test cases on the class website. By altering the input for the provided test cases, we would have some opposite result simple test cases. 
+
+After we have passed the simple test cases, we started writing test cases for all case statements in our interpreter.scala file, which means, we have covered all case branches in our interpreter.scala. And we did so by examining level-by-level, for example, to test JamFun, that would give us JamClosure and PrimFun, so we need to test both of these. Then, for PrimFun, we have a list of functions to test. Also, for BinOp, and UnOp, we have tested all cases for these to class.
+
+After testing with relatively simple test cases, we have designed some cases with nested Let statement, which gives us complex bindings. After passing these, We started using the hard test cases you provided on the class site.
+
+Then, we are finished with all these using Call-By-Value tests, we started testing simple cases with Call-By-Name and Call-By-Need. After passing all simple cases, we went on for all hard cases we had before. Then, we specifically designed several cases that would yield different results for these three method of calling, and have passed all these cases.
+
+We tried to use the Eclipse 14 code coverage tool, which reported that our test coverage on our Interpreter is 89%.
