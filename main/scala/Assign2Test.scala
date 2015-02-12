@@ -1,6 +1,4 @@
 import java.io.StringReader
-import java.text.ParseException
-
 import junit.framework.TestCase
 import junit.framework.Assert._
 
@@ -100,16 +98,19 @@ class Assign2Test extends TestCase{
   // Test All
   def valueCheck(answer: String, program: String) = {
     var interp = new Interpreter(new StringReader(program))
+    var ge = interp.callByValue.toString()
     assertEquals(answer, interp.callByValue.toString())
   }
 
   def nameCheck(answer: String, program: String) = {
     var interp = new Interpreter(new StringReader(program))
+    var ge = interp.callByName.toString()
     assertEquals(answer, interp.callByName.toString())
   }
 
   def needCheck(answer: String, program: String) = {
     var interp = new Interpreter(new StringReader(program))
+    var ge = interp.callByNeed.toString()
     assertEquals(answer, interp.callByNeed.toString())
   }
 
@@ -126,7 +127,7 @@ class Assign2Test extends TestCase{
       allCheck(output, input );
 
     } catch{
-      case _ => fail("numberP threw ");
+      case _: Throwable => fail("numberP threw ");
     }
   } //end of func
 
@@ -137,7 +138,7 @@ class Assign2Test extends TestCase{
       allCheck(output, input );
 
     } catch{
-      case _ => fail("MathOP threw ");
+      case _: Throwable => fail("MathOP threw ");
     }
   } //end of func
 
@@ -148,7 +149,7 @@ class Assign2Test extends TestCase{
       allCheck(output, input);
       fail("parseException did not throw ParseException exception");
     }catch{
-      case _ =>
+      case _: Throwable =>
     }
   } //end of func
 
@@ -159,40 +160,448 @@ class Assign2Test extends TestCase{
       allCheck(output, input);
       fail("parseException did not throw ParseException exception");
     }catch{
-      case _ =>
+      case _: Throwable =>
     }
   } //end of func
 
-  def testOutput() {
+  // Test primitive functions
+  def testOutputCons() {
     try {
       var output = "(1 2)";
       var input = "cons(1, cons(2, null))";
       allCheck(output, input );
 
     } catch{
-      case _ => fail("numberP threw ");
+      case _: Throwable => fail("cons threw ");
     }
   } //end of func
 
-  def testOutput2() {
+  def testOutputEmpty() {
     try {
       var output = "true";
       var input = "null?(null)";
 
       allCheck(output, input );
     } catch{
-      case _ => fail("numberP threw ");
+      case _: Throwable => fail("null? threw ");
     }
   } //end of func
 
-  def testOutput3() {
+  def testOutputConsP() {
     try {
       var output = "true";
       var input = "cons?(cons(1, null))";
 
       allCheck(output, input );
     } catch{
-      case _ => fail("numberP threw ");
+      case _: Throwable => fail("cons? threw ");
+    }
+  } //end of func
+
+  def testOutputNumber() {
+    try {
+      var output = "true";
+      var input = "number?(1)";
+
+      allCheck(output, input );
+    } catch{
+      case _: Throwable => fail("number? threw ");
+    }
+  } //end of func
+
+  def testOutputFunction() {
+    try {
+      var output = "true";
+      var input = "function?(number?)";
+
+      allCheck(output, input );
+    } catch{
+      case _: Throwable => fail("function? threw ");
+    }
+  } //end of func
+
+  def testOutputArity() {
+    try {
+      var output = "3";
+      var input = "arity(map x, y, z to x)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("arity threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testOutputListNull() {
+    try {
+      var output = "true";
+      var input = "list?(null)";
+
+      allCheck(output, input );
+    } catch{
+      case _: Throwable => fail("list? null threw ");
+    }
+  } //end of func
+
+  def testOutputList() {
+    try {
+      var output = "true";
+      var input = "list?(cons(1, cons(2, null)))";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("list? threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testOutputFirst() {
+    try {
+      var output = "1";
+      var input = "first(cons(1, cons(2, null)))";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("first threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testOutputRest() {
+    try {
+      var output = "(2)";
+      var input = "rest(cons(1, cons(2, null)))";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("rest threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  // should fail cases
+
+  def testFailCons() {
+    try {
+      var output = "false";
+      var input = "cons?(map x to 1)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("failcons threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testFailNull() {
+    try {
+      var output = "false";
+      var input = "null?(3)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("failnull threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testFailNumber() {
+    try {
+      var output = "false";
+      var input = "number?(null)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("failnumber threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testFailFunction() {
+    try {
+      var output = "false";
+      var input = "function?(null)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("failfunction threw " + e.printStackTrace());
+    }
+  } //end of func
+
+  def testFaillist() {
+    try {
+      var output = "false";
+      var input = "list?(map x to 1)";
+
+      allCheck(output, input );
+    } catch{
+      case e: Throwable => fail("faillist threw " + e.printStackTrace());
+    }
+  } //end of func
+
+
+
+  // Test Free variable, should get different result for value, name, need calls.
+
+  def testFreeVarValue() {
+    try {
+      var output = "5";
+      var input = "let x := f; \n in 5";
+
+      try{
+        valueCheck(output, input)
+        fail("Did not throw free variable")
+      } catch {
+        case e: Throwable =>
+      }
+    } catch{
+      case e: Throwable => fail("free variable value call by value");
+    }
+  } //end of func
+
+  def testFreeVarName() {
+    try {
+      var output = "5";
+      var input = "let x := f; \n in 5";
+
+      nameCheck(output, input)
+    } catch{
+      case e: Throwable => fail("free variable throw for call by name");
+    }
+  } //end of func
+
+  def testFreeVarNeed() {
+    try {
+      var output = "5";
+      var input = "let x := f; \n in 5";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("free variable throw for call by need");
+    }
+  } //end of func
+
+  def testUnary() {
+    try {
+      var output = "5";
+      var input = "+5";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("unary throw");
+    }
+  } //end of func
+
+  def testUnary2() {
+    try {
+      var output = "-5";
+      var input = "-5";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("unary throw");
+    }
+  } //end of func
+
+  def testUnary3() {
+    try {
+      var output = "false";
+      var input = "~true";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("unary throw");
+    }
+  } //end of func
+
+  def testUnary4() {
+    try {
+      var output = "true";
+      var input = "~false";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("unary throw");
+    }
+  } //end of func
+
+  def testBinary1() {
+    try {
+      var output = "true";
+      var input = "5 > 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary2() {
+    try {
+      var output = "false";
+      var input = "5 < 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary3() {
+    try {
+      var output = "false";
+      var input = "5 <= 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary4() {
+    try {
+      var output = "true";
+      var input = "2 <= 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary5() {
+    try {
+      var output = "true";
+      var input = "2 != 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary6() {
+    try {
+      var output = "false";
+      var input = "3 != 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary7() {
+    try {
+      var output = "5";
+      var input = "2 + 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary8() {
+    try {
+      var output = "-1";
+      var input = "2 - 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary9() {
+    try {
+      var output = "4";
+      var input = "8 / 2";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary10() {
+    try {
+      var output = "6";
+      var input = "2 * 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary11() {
+    try {
+      var output = "true";
+      var input = "3 >= 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary12() {
+    try {
+      var output = "false";
+      var input = "2 >= 3";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary13() {
+    try {
+      var output = "true";
+      var input = "true & true";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary14() {
+    try {
+      var output = "false";
+      var input = "false & true";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary15() {
+    try {
+      var output = "true";
+      var input = "false | true";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary16() {
+    try {
+      var output = "true";
+      var input = "true | false";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
+    }
+  } //end of func
+
+  def testBinary17() {
+    try {
+      var output = "false";
+      var input = "true & false";
+
+      needCheck(output, input)
+    } catch{
+      case e: Throwable => fail("Binary throw");
     }
   } //end of func
 }

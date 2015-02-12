@@ -10,15 +10,16 @@ class ValueTuple(jamVal: JamVal, ast: AST) extends Tuple{
   override def getAST = ast
 }
 
-class NameTuple(jamVal: => JamVal, ast: AST) extends Tuple{
+class NameTuple(jamVal: => JamVal, ast: => AST) extends Tuple{
   override def getJamVal = jamVal
   override def getAST = ast
 }
 
-class NeedTuple(f: (AST, Map[Symbol, NeedTuple]) => JamVal, env: Map[Symbol, NeedTuple], vaar: AST, ast: AST) extends Tuple{
-  lazy val jamVal = f(vaar, env)
+class NeedTuple(helper: (AST, Map[Symbol, NeedTuple]) => JamVal, notUntil: (AST, Map[Symbol, NeedTuple]) => AST, env: Map[Symbol, NeedTuple], rawVar: AST) extends Tuple{
+  lazy val jamVal = helper(rawVar, env)
+  lazy val lazyAst = notUntil(rawVar, env)
   override def getJamVal = jamVal
-  override def getAST = ast
+  override def getAST = lazyAst
 }
 
 class EvalException(msg: String) extends RuntimeException(msg)
@@ -112,7 +113,7 @@ class Interpreter(reader: java.io.Reader) {
       case UnOpApp(rator: UnOp, arg: AST) => rator match {
         case UnOpPlus =>  UnIntOp(e, arg, + _, "unary plus without int")
         case UnOpMinus => UnIntOp(e, arg, - _, "unary minus without int")
-        case OpTilde => helper(ast, e) match {
+        case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
         }
@@ -138,7 +139,11 @@ class Interpreter(reader: java.io.Reader) {
         case ListPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ListPPrim")
           args(0) match {
-            case ConsPrim | EmptyConstant => True
+            case EmptyConstant => True
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
             case _ => False
           }
 
@@ -149,8 +154,7 @@ class Interpreter(reader: java.io.Reader) {
               case ConsPrim => True
               case _ => False
             }
-            case EmptyConstant => False
-            case _ => throw new EvalException("ConsPPrim arg0 not ConsPrim nor EmptyConstant")
+            case _ => False
           }
 
         case EmptyPPrim =>
@@ -180,7 +184,10 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.first
               case _ => throw new EvalException("Calling FirstPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.first
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(0), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -191,7 +198,10 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.rest
               case _ => throw new EvalException("Calling RestPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.rest
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(1), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -295,7 +305,7 @@ class Interpreter(reader: java.io.Reader) {
       case UnOpApp(rator: UnOp, arg: AST) => rator match {
         case UnOpPlus =>  UnIntOp(e, arg, + _, "unary plus without int")
         case UnOpMinus => UnIntOp(e, arg, - _, "unary minus without int")
-        case OpTilde => helper(ast, e) match {
+        case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
         }
@@ -322,16 +332,22 @@ class Interpreter(reader: java.io.Reader) {
         case ListPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ListPPrim")
           args(0) match {
-            case ConsPrim | EmptyConstant => True
+            case EmptyConstant => True
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
             case _ => False
           }
 
         case ConsPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ConsPPrim")
           args(0) match {
-            case ConsPrim => True
-            case EmptyConstant => False
-            case _ => throw new EvalException("ConsPPrim arg0 not ConsPrim nor EmptyConstant")
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
+            case _ => False
           }
 
         case EmptyPPrim =>
@@ -361,7 +377,10 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.first
               case _ => throw new EvalException("Calling FirstPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.first
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(0), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -372,7 +391,10 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.rest
               case _ => throw new EvalException("Calling RestPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.rest
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(1), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -386,7 +408,9 @@ class Interpreter(reader: java.io.Reader) {
         }
         case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
       }
-      case pf: PrimFun => pf
+      case pf: PrimFun => {
+        pf
+      }
     }
     helper(ast, Map())
   }
@@ -461,7 +485,7 @@ class Interpreter(reader: java.io.Reader) {
       }
       case Let(defs: Array[Def], body: AST) =>
         var newMap = e
-        defs.map(d => (d.lhs.sym, new NeedTuple(helper, e, d.rhs, untilNotVariable(d.rhs, e)))).foreach(pair => newMap += pair)
+        defs.map(d => (d.lhs.sym, new NeedTuple(helper, untilNotVariable, e, d.rhs))).foreach(pair => newMap += pair)
         helper(body, newMap)
 
       // Constant
@@ -476,7 +500,7 @@ class Interpreter(reader: java.io.Reader) {
       case UnOpApp(rator: UnOp, arg: AST) => rator match {
         case UnOpPlus =>  UnIntOp(e, arg, + _, "unary plus without int")
         case UnOpMinus => UnIntOp(e, arg, - _, "unary minus without int")
-        case OpTilde => helper(ast, e) match {
+        case OpTilde => helper(arg, e) match {
           case True => False
           case False => True
         }
@@ -502,16 +526,22 @@ class Interpreter(reader: java.io.Reader) {
         case ListPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ListPPrim")
           args(0) match {
-            case ConsPrim | EmptyConstant => True
+            case EmptyConstant => True
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
             case _ => False
           }
 
         case ConsPPrim =>
           if (args.length != 1) throw new EvalException("Should have one argument for ConsPPrim")
           args(0) match {
-            case ConsPrim => True
-            case EmptyConstant => False
-            case _ => throw new EvalException("ConsPPrim arg0 not ConsPrim nor EmptyConstant")
+            case App(ract, _) => ract match {
+              case ConsPrim => True
+              case _ => False
+            }
+            case _ => False
           }
 
         case EmptyPPrim =>
@@ -541,7 +571,11 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.first
               case _ => throw new EvalException("Calling FirstPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.first
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(0), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
+            //case jl: JamListNE => jl.first
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -552,7 +586,10 @@ class Interpreter(reader: java.io.Reader) {
               case jl: JamListNE => jl.rest
               case _ => throw new EvalException("Calling RestPrim on a non-list variable")
             }
-            case jl: JamListNE => jl.rest
+            case App(rator, l) => rator match {
+              case ConsPrim => helper(l(1), e)
+              case _ => throw new EvalException("should have consprim as the rator")
+            }
             case _ => throw new EvalException("arg0 is not a jam list, it is a " + args(0).getClass)
           }
 
@@ -560,7 +597,7 @@ class Interpreter(reader: java.io.Reader) {
           // Bind
           if (vars.length != args.length) throw new EvalException("The length of vars and args are not the same")
           var newMap = en
-          vars.zip(args).map(pair => (pair._1.sym, new NeedTuple(helper, e, pair._2, untilNotVariable(pair._2, e)))).foreach(pair => newMap += (pair))
+          vars.zip(args).map(pair => (pair._1.sym, new NeedTuple(helper, untilNotVariable, e, pair._2))).foreach(pair => newMap += (pair))
           helper(body, newMap)
         }
         case _=> throw new EvalException("Did not match. Got a class: " + rator.getClass)
